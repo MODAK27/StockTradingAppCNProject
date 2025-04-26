@@ -149,13 +149,14 @@ int main() {
             auto &seq = it->second;
             int t = seq.idx; // current time
             double price = seq.prices[seq.idx];
-            ostringstream priceTemp;
+            ostringstream priceTemp,newPrice;
             priceTemp << std::fixed << std::setprecision(2) << price;
             seq.idx = (seq.idx + 1) % seq.prices.size();
+            newPrice << std::fixed << std::setprecision(2) << seq.prices[seq.idx];
             
             cout << "[Server Q] Received a time forward request for " << stockName
-                      << ", the current price of that stock is " << priceTemp.str()
-                      << " at time " << t << ".\n";
+                      << ", the current price of that stock is " << newPrice.str()
+                      << " at time " << seq.idx << ".\n";
             auto out = stockName + " " + priceTemp.str();
             udpRequestSendTo(out, serverQ_udpSock, main_server_addr,   "Server Q");
         } else {
