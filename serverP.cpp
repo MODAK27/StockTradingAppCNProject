@@ -3,6 +3,11 @@
 #include <thread>
 #include <vector>
 #include <map>
+#include <sstream>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <unordered_map>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
