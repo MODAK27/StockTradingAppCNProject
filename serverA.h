@@ -23,6 +23,6 @@ int bootUpServerA();
  */
 unordered_map<string, string> readInfoFromFile(string filename);
 
-void processReadinessCheckOfServer(std::__1::string &receivedMsg, int serverA_udpSock, sockaddr_in &main_server_addr, int &retFlag);
+void processReadinessCheckOfServer(string &receivedMsg, int serverA_udpSock, sockaddr_in &main_server_addr, int &retFlag);
 
 #endif // SERVERA_H

@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <signal.h>
+#include <cstring>
 #include <fstream> // Include for std::ifstream
 #include "helper.h"
 #include "serverQ.h"

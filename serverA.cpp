@@ -9,6 +9,8 @@
 #include <fstream> // Include for std::ifstream
 #include "helper.h"
 #include "serverA.h"
+#include <signal.h>
+#include <cstring>  
 
 using namespace std;
 
