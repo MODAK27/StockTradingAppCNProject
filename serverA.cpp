@@ -11,6 +11,8 @@
 #include "serverA.h"
 #include <signal.h>
 #include <cstring>  
+#include <sstream>
+#include <string>
 
 using namespace std;
 
