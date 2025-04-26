@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <string>
+#include <csignal>
 #include <sstream>
 #include <unistd.h>
 #include <iomanip>
