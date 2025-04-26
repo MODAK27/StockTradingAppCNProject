@@ -1,3 +1,5 @@
+STOCK TRADING APP
+
 1. Name : Debasish Modak
 
 2. USC ID : 5955298569
@@ -13,6 +15,7 @@
     • ServerM.cpp (MAIN SERVER) The main server handles talking to all other servers and the clients and performs extra calculations such as encrypting password to be sent to serverA and also user's gain or updating the average cost price of a stock per user as required. 
     • Client.cpp (Client ) It is available to the end users as a screen to authenticate with the server and once logged in can see their holdings/current price of stock/ and buy/sell requests as well.
     • Helper.cpp : It has constants and some helper functions to create the TCP and UDP sockets, addresses, bindings, send and receive common requests.
+    • Makefile : make clean and make all for project
 
 5. Format of messages exchanged :
     TCP-----( client - server)
