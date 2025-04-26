@@ -12,15 +12,17 @@ using namespace std;
 #define MAXBUFLEN 1024     // max number of bytes at once
 #define LOCALHOST "127.0.0.1" // localhost IP address
 
+
+// helper function only for debugging for printing the communjcation channels by this file only
 string destinationName (string source) {
     if (source.find("Server")!= string::npos) return "Client";
     else if (source.find("Client")!= string::npos) return "Server";
     else return "Unknown";
 }
-
 // ----------------TCP helpers--------------------
 
-string receiveLineTCP(int sock, string source) {
+// receive a line of TCP message from the socket
+string receiveLineTCP(int sock, string source) { // -------------REFERENCE-------------
     string line;
     char ch;
     while (true) {
@@ -34,7 +36,7 @@ string receiveLineTCP(int sock, string source) {
             exit(1);
         }
         if (ch == '\n') {
-            break;             // full line received
+            break;             // full line received or break on new line makring end of input
         } 
         if (ch == '\r') {
             continue;          // skip CR if sent as CRLF
@@ -43,6 +45,7 @@ string receiveLineTCP(int sock, string source) {
     }
     return line;
 }
+// receive multi-line TCP messages from the socket, it breaks on empty line which marks as the end of input seqeunce sent by the server
 string receiveMultiLine(int sock, string source) {
     string result = "";
     while (true) {
@@ -52,6 +55,7 @@ string receiveMultiLine(int sock, string source) {
     }
     return result;
 }
+// send TCP messages to the socket
 void sendTCP(string msg, int sock, string source) {
     string out = msg;
     if (out.empty() || out.back() != '\n') {
@@ -71,27 +75,30 @@ int createUniqueTCPSocket(string source) {
     }
     return sock;
 }
+// bind to associate TCPsocket with addr
 void bindTCPSocket(int server_udpSock, sockaddr_in &addr, string source)
 {    // need :: (global scope resolution operator) to use bind for sockets from socket.h
-    if (::bind(server_udpSock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) == -1){
+    if (::bind(server_udpSock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) == -1){ //-------------REFERENCE-------------
         cerr<<"ERROR: "<<source<<" could not bind TCP socket"<<endl;
         exit(1);
     }
 }
 // --------------------UDP helpers--------------------
 
+// send UDP messages to the socket
 void udpRequestSendTo(string &msg, int udpSock, sockaddr_in &dest, string source) {
     if(sendto(udpSock, msg.c_str(), msg.size(), 0, (const sockaddr*)(&dest), sizeof(dest))== -1) {
         cerr << "ERROR: " << source << " failed to send UDP reqeust to " << destinationName(source) << " " << endl;
         exit(1);
     }
 }
+// receive UDP message from the socket
 string udpRequestReceiveFrom(int udpSock, sockaddr_in &dest, string source, string destination) {
     char buf[MAXBUFLEN];
     socklen_t addr_len = sizeof(dest);
     int n = recvfrom(udpSock, buf, sizeof(buf)-1, 0, (sockaddr*)(&dest), &addr_len);
     if (n < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) { // -------------REFERENCE-------------
             // timeout—caller will treat this as "no reply yet"
             return "";
         }
@@ -104,7 +111,7 @@ string udpRequestReceiveFrom(int udpSock, sockaddr_in &dest, string source, stri
 }
 
 // create address structure 
-void initAddr(sockaddr_in &addr, int port) {
+void initAddr(sockaddr_in &addr, int port) { 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port   = htons(port);
@@ -112,7 +119,7 @@ void initAddr(sockaddr_in &addr, int port) {
 }
 
 // create UDP socket
-int create_UDP_Socket(string source) {
+int create_UDP_Socket(string source) {  // -------------REFERENCE-------------
     int sock = socket(PF_INET, SOCK_DGRAM, 0);
     if(sock == -1){
        cerr<<"ERROR: Server "<< source<<" failed to create UDPsocket"<<endl;
@@ -120,8 +127,9 @@ int create_UDP_Socket(string source) {
     }
     return sock;
 }
-void bindUDPSocket(int server_udpSock, sockaddr_in &addr, string source)
-{    // need :: (global scope resolution operator) to use bind for sockets from socket.h
+// bind to associate UDPsocket with addrress strcut
+void bindUDPSocket(int server_udpSock, sockaddr_in &addr, string source) { //-------------REFERENCE-------------
+    // need :: (global scope resolution operator) to use bind for sockets from socket.h
     if (::bind(server_udpSock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) == -1){
         cerr<<"ERROR: "<< source<<" could not bind UDP socket"<<endl;
         exit(1);
@@ -129,10 +137,10 @@ void bindUDPSocket(int server_udpSock, sockaddr_in &addr, string source)
 }
 
 // ------------------- Other helpers -----------------
-bool processReadinessCheckOfServer(string &receivedMsg, int server_udpSock, sockaddr_in &main_server_addr, string source)
-{
-    if (receivedMsg == "PING")
-    {
+
+// function used by other servers and checks the req called by server M was for healthCheck and responds
+bool processReadinessCheckOfServer(string &receivedMsg, int server_udpSock, sockaddr_in &main_server_addr, string source){
+    if (receivedMsg == "PING"){
         // cout <<"["<< source<<"] Received PING from Server M. Responding with PONG." << endl; // -------------------
         string pong = "PONG";
         udpRequestSendTo(pong, server_udpSock, main_server_addr, source);

@@ -21,17 +21,19 @@ int bootUpClient(){
     int clientTCPSock = -1;
 
     sockaddr_in main_server_addr{};
+    // call helper function to create the address struct for TCP port of main server
     initAddr(main_server_addr, M_PORT_TCP);
 
     //  connect to main server
     int attempts = 0;
-    while (attempts++ < MAX_RETRIES) {
+    while (attempts++ < MAX_RETRIES) { // MAX_RETRIES here = 120 or 2 mins
         if (clientTCPSock >= 0) close(clientTCPSock);
 
         clientTCPSock = createUniqueTCPSocket("Client");
+
         // Most clients don’t need to bind to an ephemeral port; the OS picks one automatically when you call connect()
         if (connect(clientTCPSock, (sockaddr*)&main_server_addr, sizeof(main_server_addr)) == 0) {
-            break;  // success!
+            break;  // TCP connection to main server was success!
         }
         // perror("[Client] connect failed, retrying");
         sleep(1);
@@ -59,7 +61,6 @@ int main() {
         
         string response = receiveLineTCP(sock, "Client");
 
-        // check if what the Main Server sent is "SUCCESS", otherwise "ASK THEM TO TRY AGAIN"
         if (response == "Authentication successful") {
             cout << "[Client] You have been granted access.\n";
             break;
@@ -68,7 +69,7 @@ int main() {
         }
     }
 
-     // dynamic TCP port per client
+     // dynamic TCP port per client (used getsockname referenced from given pdf to get the dynamic port) -------------REFERENCE-------------
      sockaddr_in local;
      socklen_t len = sizeof(local);
      getsockname(sock, (sockaddr*)&local, &len);
@@ -85,7 +86,7 @@ int main() {
         "sell <stock name> <number of shares>\n"
         "position\n"
         "exit\n";
-
+        cout<<"--------------------------------------\n";
         string cmd, response;
         if (!getline(cin, cmd)) {
             cmd = "exit";
@@ -108,7 +109,7 @@ int main() {
 
         } else if (cmd.rfind("buy", 0) == 0) {
             bool retFlag = true;
-            validateBuyCommand(cmd, retFlag);
+            validateBuyCommand(cmd, retFlag); // validate the input 
             if (retFlag == false)
                 continue;
 
@@ -118,7 +119,7 @@ int main() {
             cout<<response;
             
             if (response.find("Error") != string::npos) {
-                continue;
+                continue; // start new request or reitertate
             }
             string chosenPrompt;
             while (true) {
@@ -150,7 +151,7 @@ int main() {
 
         } else if (cmd.rfind("sell", 0) == 0) {
             bool retFlag = true;
-            validateSellCommand(cmd, retFlag);
+            validateSellCommand(cmd, retFlag); // validate the sell input command
             if (retFlag == false)
                 continue;
 
@@ -206,64 +207,38 @@ int main() {
 void validateBuyCommand(string &cmd, bool &retFlag)
 {
     retFlag = true;
-    // Validate "buy" command format
+    // Validate "buy" command format checks buy <stock name> <number of shares> making it valid these 3 space separated words and quantity > 0
     size_t firstSpace = cmd.find(' ');
     size_t secondSpace = cmd.find(' ', firstSpace + 1);
-    if (firstSpace == string::npos || secondSpace == string::npos)
-    {
+    if (firstSpace == string::npos || secondSpace == string::npos){
         cout << "[Client] Error: stock name/shares are required. Please specify a stockname to buy.\n";
-        {
-            retFlag = false;
-            return;
-        };
+        retFlag = false;
+        return;
     }
     string stockName = cmd.substr(firstSpace + 1, secondSpace - firstSpace - 1);
     string quantityStr = cmd.substr(secondSpace + 1);
-    int quantity;
-    try
-    {
-        quantity = stoi(quantityStr);
-        if (quantity <= 0)
-            throw invalid_argument("Quantity must be positive.");
-    }
-    catch (...)
-    {
+    int quantity = stoi(quantityStr);
+    if (quantity <= 0) {
         cout << "[Client] Error: stock name/shares are required. Please specify a stockname to buy.\n";
-        {
-            retFlag = false;
-            return;
-        };
+        retFlag = false;
     }
 }
-void validateSellCommand(string & cmd, bool &retFlag)
+void validateSellCommand(string &cmd, bool &retFlag)
 {
     retFlag = true;
-    // Validate "sell" command format
+    // Validate "sell" command format checks buy <stock name> <number of shares> making it valid these 3 space separated words and quantity > 0
     size_t firstSpace = cmd.find(' ');
     size_t secondSpace = cmd.find(' ', firstSpace + 1);
-    if (firstSpace == string::npos || secondSpace == string::npos)
-    {
+    if (firstSpace == string::npos || secondSpace == string::npos){
         cout << "[Client] Error: stock name/shares are required. Please specify a stockname to sell.\n";
-        {
-            retFlag = false;
-            return;
-        };
+        retFlag = false;
+        return;
     }
     string stockName = cmd.substr(firstSpace + 1, secondSpace - firstSpace - 1);
     string quantityStr = cmd.substr(secondSpace + 1);
-    int quantity;
-    try
-    {
-        quantity = stoi(quantityStr);
-        if (quantity <= 0)
-            throw invalid_argument("Quantity must be positive.");
-    }
-    catch (...)
-    {
+    int quantity = stoi(quantityStr);
+    if (quantity <= 0) {
         cout << "[Client] Error: stock name/shares are required. Please specify a stockname to sell.\n";
-        {
-            retFlag = false;
-            return;
-        };
+        retFlag = false;
     }
 }

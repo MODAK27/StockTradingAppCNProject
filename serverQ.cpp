@@ -147,7 +147,6 @@ int main() {
                 continue;
             }
             auto &seq = it->second;
-            int t = seq.idx; // current time
             double price = seq.prices[seq.idx];
             ostringstream priceTemp,newPrice;
             priceTemp << std::fixed << std::setprecision(2) << price;

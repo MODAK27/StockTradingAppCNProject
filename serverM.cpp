@@ -60,7 +60,7 @@ bool healthCheck(string &name, sockaddr_in &addr, int serverM_udpSock) {
     // set receive timeout
     timeval tv{2, 0}; // define timeout of 2 second
     // set socket option to honour the timeout so that it doesn't block the thread indefinitely
-    setsockopt(serverM_udpSock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    setsockopt(serverM_udpSock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)); // -----------REFERENCE-------------
 
     string response = udpRequestReceiveFrom(serverM_udpSock, addr, "Server M", name);
     if (response == "PONG") {
@@ -78,7 +78,7 @@ string encryption(string &passwordToEncrypt) {
     password.reserve(passwordToEncrypt.size());
     for (unsigned char c : passwordToEncrypt) {
         if (c >= 'A' && c <= 'Z') {
-            password += char('A' + (c - 'A' + 3) % 26);
+            password += char('A' + (c - 'A' + 3) % 26); // roattaion
         }
         else if (c >= 'a' && c <= 'z') {
             password += char('a' + (c - 'a' + 3) % 26);
@@ -130,11 +130,10 @@ void serveClient(int clientTCPSock, int serverM_udpSock, sockaddr_in &addrA, soc
     bool authenticated = false;
     string user = "";
     // ── Login retry loop ────────────────────────────────────────────────────────
-    while (attempts < MAX_RETRIES && !authenticated) {
-
+    while (attempts < MAX_RETRIES && !authenticated) { // same TCP socket for login multiple times like real system ,else exits and close off the child socket
     
-        user = receiveLineTCP(clientTCPSock, "");
-        string password = receiveLineTCP(clientTCPSock, "");
+        user = receiveLineTCP(clientTCPSock, "client");
+        string password = receiveLineTCP(clientTCPSock, "client");
 
         string hashed = encryption(password);
         string asterikPassword(password.size(), '*');
@@ -160,10 +159,9 @@ void serveClient(int clientTCPSock, int serverM_udpSock, sockaddr_in &addrA, soc
     while(true) {
         string option = receiveLineTCP(clientTCPSock,   "Server M");
 
-        // THINK as soon as position sent, again quote sent same time, then what? --------------------------
         if (option.rfind("exit",0)  == 0) {
             cout << "[Server M] Client disconnected." << endl;
-            break; // then only this function is forced to return and the client got disconnected forcing sequential
+            break; 
 
         } else if (option.find("quote", 0) == 0) {
             handleClientQuotesRequest(option, user, serverM_udpSock, addrQ, clientTCPSock);
@@ -238,15 +236,11 @@ void handleBuyRequest(string &user, string &option, int clientTCPSock, int serve
         cout<<"Not a valid operation."<<endl;
     }
     // send a time forward request to server Q to advance the time
-    bool retFlag;
-    timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock, retFlag);
-    if (retFlag)
-        return;
+    timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock);
 }
 
-void timeForwardRequestForBuyOrSell(string &user, string &stockName, int serverM_udpSock, sockaddr_in &addrQ, int clientTCPSock, bool &retFlag)
+void timeForwardRequestForBuyOrSell(string &user, string &stockName, int serverM_udpSock, sockaddr_in &addrQ, int clientTCPSock)
 {
-    retFlag = true;
     // send a time forward request to server Q to advance the time
     string positionReq = "ADVANCE " + user + " " + stockName;
     udpRequestSendTo(positionReq, serverM_udpSock, addrQ, "Server M");
@@ -257,10 +251,9 @@ void timeForwardRequestForBuyOrSell(string &user, string &stockName, int serverM
     {
         string messageToSend = "[Client] Error: stock name does not exist. Please check again";
         sendTCP(messageToSend, clientTCPSock, "Server M");
-        sendTCP("", clientTCPSock, "Server M");
+        sendTCP("", clientTCPSock, "Server M"); // sending a blank line to indicate end of message
         return;
     }
-    retFlag = false;
 }
 
 void handleClientSellRequest(string &user, string &option, int serverM_udpSock, sockaddr_in &addrQ, sockaddr_in &addrP, int clientTCPSock)
@@ -300,10 +293,7 @@ void handleClientSellRequest(string &user, string &option, int serverM_udpSock, 
         sendTCP(messageToSend, clientTCPSock, "Server M");
         sendTCP("", clientTCPSock, "Server M");
         // send a time forward request to server Q to advance the time
-        bool retFlag;
-        timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock, retFlag);
-        if (retFlag)
-            return;
+        timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock);
         return;
     }
     else if (responseFromServerP == "FAILQUANTITY") {
@@ -311,10 +301,7 @@ void handleClientSellRequest(string &user, string &option, int serverM_udpSock, 
         sendTCP(messageToSend, clientTCPSock, "Server M");
         sendTCP("", clientTCPSock, "Server M");
         // send a time forward request to server Q to advance the time
-        bool retFlag;
-        timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock, retFlag);
-        if (retFlag)
-            return;
+        timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock);
         return;
     }
     else if (responseFromServerP == "OK_ELIGIBLE") {
@@ -323,7 +310,7 @@ void handleClientSellRequest(string &user, string &option, int serverM_udpSock, 
         cout<<"[Server M] Sell request for " << shares << " shares of " << stockName << " failed. UNEXPECTED" << endl;
     }
     sendTCP(messageToSend, clientTCPSock, "Server M");
-    sendTCP("", clientTCPSock, "Server M");
+    sendTCP("", clientTCPSock, "Server M"); // deliberately sending empty line to indicate end of message
     cout << "[Server M] Forwarded the sell confirmation to the client." << endl;
 
     string chosenPrompt = receiveLineTCP(clientTCPSock, "Server M");
@@ -352,10 +339,7 @@ void handleClientSellRequest(string &user, string &option, int serverM_udpSock, 
     }
 
     // send a time forward request to server Q to advance the time
-    bool retFlag;
-    timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock, retFlag);
-    if (retFlag)
-        return;
+    timeForwardRequestForBuyOrSell(user, stockName, serverM_udpSock, addrQ, clientTCPSock);
     
 }
 void handleClientPositionsRequest(string &user, int serverM_udpSock, sockaddr_in &addrP, sockaddr_in &addrQ, int clientTCPSock)
@@ -414,7 +398,7 @@ void handleClientQuotesRequest(string &option, string &user, int serverM_udpSock
 }
 int main()
 {
-    signal(SIGCHLD, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN); // to kill all zombie processes
     
     pair<int, int> serverM_sockets = bootUpServerM();
     int serverM_udpSock = serverM_sockets.first;
@@ -429,7 +413,7 @@ int main()
 
     // Check if the other servers are up
     int tries = 0;
-    while (++tries <= MAX_RETRIES) {
+    while (++tries <= MAX_RETRIES) { // 2 mins or 120 attempts
         if (healthCheck(serverA, addrA, serverM_udpSock) &&
             healthCheck(serverP, addrP, serverM_udpSock) &&
             healthCheck(serverQ, addrQ, serverM_udpSock) ) {
@@ -444,25 +428,23 @@ int main()
             exit(1);
     }
 
-    // listen for incoming connections and holds multiple pending SYNs.
+    // listen for incoming connections and holds multiple pending SYNs. limit of 10 for pending connections
     if(listen(serverM_tcpSock, 10) == -1){
         perror("ERROR: Server M failed to listen on TCP socket");
         exit(1);
     }
 
-    while (true) {
+    while (true) { // -------------REFERENCE-------------
         // pulls the next one off the queue post listen command, returning a new socket descriptor
         int clientTCPSock = accept(serverM_tcpSock, nullptr, nullptr); 
 
         if (clientTCPSock<0) continue;
-        pid_t pid = fork(); // create a child process
-        // used fork to handle parallel clients only in server M layer, not post this as when 2 parallel call comes from 2 client at same tine 
-        // and one UDP socket is used to communicate to other servers A,P,Q, packets might mix
+        pid_t pid = fork(); // fork a child to handle clients concurrently
+        // used fork to handle parallel clients 
         if (pid==0) {
-            close(serverM_tcpSock); // close the listening socket in the child process
-            serveClient(clientTCPSock, serverM_udpSock, addrA, addrP, addrQ); // in 163 line forced ssequential
-            //  this way it ensures that one client has finished off it's execution then it handles the next one
-            close(clientTCPSock);
+            close(serverM_tcpSock); // close the listening socket
+            serveClient(clientTCPSock, serverM_udpSock, addrA, addrP, addrQ); // it serves the  client
+            close(clientTCPSock); // close the child socket
             _exit(0);// stating that the child process is done
         }
         close(clientTCPSock);
