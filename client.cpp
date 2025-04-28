@@ -109,7 +109,7 @@ int main() {
 
         } else if (cmd.rfind("buy", 0) == 0) {
             bool retFlag = true;
-            validateBuyCommand(cmd, retFlag); // validate the input 
+            validateCommand(cmd, retFlag,"buy"); // validate the input 
             if (retFlag == false)
                 continue;
 
@@ -151,7 +151,7 @@ int main() {
 
         } else if (cmd.rfind("sell", 0) == 0) {
             bool retFlag = true;
-            validateSellCommand(cmd, retFlag); // validate the sell input command
+            validateCommand(cmd, retFlag, "sell"); // validate the sell input command
             if (retFlag == false)
                 continue;
 
@@ -204,14 +204,14 @@ int main() {
     close(sock);
     return 0;
 }
-void validateBuyCommand(string &cmd, bool &retFlag)
+void validateCommand(string &cmd, bool &retFlag, string command)
 {
     retFlag = true;
-    // Validate "buy" command format checks buy <stock name> <number of shares> making it valid these 3 space separated words and quantity > 0
+    // Validate "buy"/"sell" command format checks buy <stock name> <number of shares> making it valid these 3 space separated words and quantity > 0
     size_t firstSpace = cmd.find(' ');
     size_t secondSpace = cmd.find(' ', firstSpace + 1);
     if (firstSpace == string::npos || secondSpace == string::npos){
-        cout << "[Client] Error: stock name/shares are required. Please specify a stockname to buy.\n";
+        cout << "[Client] Error: stock name/shares are required. Please specify a stockname to "<<command<<".\n";
         retFlag = false;
         return;
     }
@@ -219,26 +219,7 @@ void validateBuyCommand(string &cmd, bool &retFlag)
     string quantityStr = cmd.substr(secondSpace + 1);
     int quantity = stoi(quantityStr);
     if (quantity <= 0) {
-        cout << "[Client] Error: stock name/shares are required. Please specify a stockname to buy.\n";
-        retFlag = false;
-    }
-}
-void validateSellCommand(string &cmd, bool &retFlag)
-{
-    retFlag = true;
-    // Validate "sell" command format checks buy <stock name> <number of shares> making it valid these 3 space separated words and quantity > 0
-    size_t firstSpace = cmd.find(' ');
-    size_t secondSpace = cmd.find(' ', firstSpace + 1);
-    if (firstSpace == string::npos || secondSpace == string::npos){
-        cout << "[Client] Error: stock name/shares are required. Please specify a stockname to sell.\n";
-        retFlag = false;
-        return;
-    }
-    string stockName = cmd.substr(firstSpace + 1, secondSpace - firstSpace - 1);
-    string quantityStr = cmd.substr(secondSpace + 1);
-    int quantity = stoi(quantityStr);
-    if (quantity <= 0) {
-        cout << "[Client] Error: stock name/shares are required. Please specify a stockname to sell.\n";
+        cout << "[Client] Error: stock name/shares are required. Please specify a stockname to "<<command<<".\n";
         retFlag = false;
     }
 }

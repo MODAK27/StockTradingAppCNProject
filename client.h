@@ -16,8 +16,6 @@ using namespace std;
  */
 int bootUpClient();
 
-void validateBuyCommand(string &cmd, bool &retFlag);
-
-void validateSellCommand(string & cmd, bool &retFlag);
+void validateCommand(string &cmd, bool &retFlag, string command);
 
 #endif // CLIENT_H
